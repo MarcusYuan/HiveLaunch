@@ -93,8 +93,81 @@ jobs:
 
   build-desktop:
     needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --config infra/tauri/tauri.conf.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}-${{ needs.prepare.outputs.tag }}
+          path: |
+            infra/tauri/target/release/bundle
+            infra/tauri/target/release/*.dmg
+            infra/tauri/target/release/*.app
+            infra/tauri/target/release/*.msi
+            infra/tauri/target/release/*.exe
+            infra/tauri/target/release/*.deb
+            infra/tauri/target/release/*.AppImage
+
+  build-mobile-android:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+      - uses: android-actions/setup-android@v3
+      - name: Build Android release
+        run: |
+          cd apps/mobile
+          rm -rf src-tauri/gen/android
+          pnpm exec tauri android init
+          pnpm exec tauri android build --debug --ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-${{ needs.prepare.outputs.tag }}
+          path: |
+            apps/mobile/src-tauri/gen/android/**/build/outputs/**/*.apk
+            apps/mobile/src-tauri/gen/android/**/build/outputs/**/*.aab
+            apps/mobile/android/**/build/outputs/**/*.apk
+            apps/mobile/android/**/build/outputs/**/*.aab
+
+  build-mobile-ios:
+    needs: prepare
     runs-on: macos-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -106,17 +179,22 @@ jobs:
           cache: pnpm
       - uses: dtolnay/rust-toolchain@stable
       - run: pnpm install --frozen-lockfile
-      - run: pnpm tauri build --config infra/tauri/tauri.conf.json
+      - run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+      - name: Build iOS release
+        run: |
+          cd apps/mobile
+          rm -rf src-tauri/gen/apple
+          pnpm exec tauri ios init
+          pnpm exec tauri ios build --debug --target aarch64-sim --ci
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-macos-${{ needs.prepare.outputs.tag }}
+          name: mobile-ios-${{ needs.prepare.outputs.tag }}
           path: |
-            infra/tauri/target/release/bundle
-            infra/tauri/target/release/*.dmg
-            infra/tauri/target/release/*.app
+            apps/mobile/src-tauri/gen/apple/**/build/**
+            apps/mobile/ios/build
 
   publish-release:
-    needs: [prepare, build-web, build-api, build-desktop]
+    needs: [prepare, build-web, build-api, build-desktop, build-mobile-android, build-mobile-ios]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

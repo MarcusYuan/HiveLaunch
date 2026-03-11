@@ -1,0 +1,47 @@
+name: Desktop CI macOS
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'infra/tauri/**'
+      - 'apps/web/**'
+      - 'packages/shared-types/**'
+      - 'packages/shared-ui/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/desktop-ci-macos.yml'
+  push:
+    branches: [dev, main]
+    paths:
+      - 'infra/tauri/**'
+      - 'apps/web/**'
+      - 'packages/shared-types/**'
+      - 'packages/shared-ui/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/desktop-ci-macos.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-ci-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-smoke-macos:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --debug --config infra/tauri/tauri.conf.json
