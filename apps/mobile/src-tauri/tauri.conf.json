@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "HiveLaunch",
+  "version": "0.1.0",
+  "identifier": "com.hivelaunch.mobile",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @hivelaunch/web exec next dev -H 0.0.0.0 -p 3001",
+    "beforeBuildCommand": "TAURI_STATIC_EXPORT=1 pnpm --filter @hivelaunch/web build",
+    "devUrl": "http://localhost:3001",
+    "frontendDist": "../../web/out"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "HiveLaunch",
+        "url": "/",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true,
+      "freezePrototype": false,
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      }
+    }
+  }
+}
