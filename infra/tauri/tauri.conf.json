@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "identifier": "com.hivelaunch.app",
   "build": {
-    "beforeDevCommand": "LAN_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo 127.0.0.1); NEXT_PUBLIC_API_BASE_URL=http://$LAN_IP:3847 NEXT_PUBLIC_WS_BASE_URL=ws://$LAN_IP:3847 pnpm --filter @hivelaunch/web dev",
-    "beforeBuildCommand": "LAN_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo 127.0.0.1); TAURI_STATIC_EXPORT=1 NEXT_PUBLIC_API_BASE_URL=http://$LAN_IP:3847 NEXT_PUBLIC_WS_BASE_URL=ws://$LAN_IP:3847 pnpm --filter @hivelaunch/web build",
+    "beforeDevCommand": "pnpm --filter @hivelaunch/web dev",
+    "beforeBuildCommand": "pnpm --filter @hivelaunch/web exec node scripts/static-export-build.cjs",
     "devUrl": "http://localhost:3000",
     "frontendDist": "../../apps/web/out"
   },

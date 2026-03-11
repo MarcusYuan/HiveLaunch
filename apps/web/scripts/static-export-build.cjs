@@ -22,7 +22,15 @@ if (fs.existsSync(apiDir)) {
 
 try {
   console.log('🏗️  Building with static export...')
-  execSync('pnpm build', { stdio: 'inherit' })
+  execSync('pnpm build', {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      TAURI_STATIC_EXPORT: '1',
+      NEXT_PUBLIC_API_BASE_URL: 'http://127.0.0.1:3847',
+      NEXT_PUBLIC_WS_BASE_URL: 'ws://127.0.0.1:3847',
+    },
+  })
   console.log('✨ Static export complete!')
 } finally {
   // 恢复 API 目录
