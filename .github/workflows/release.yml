@@ -122,9 +122,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: Package release assets
+        run: |
+          mkdir -p release-assets
+          for artifact_dir in artifacts/*; do
+            artifact_name="$(basename "$artifact_dir")"
+            tar -czf "release-assets/${artifact_name}.tar.gz" -C "$artifact_dir" .
+          done
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           fail_on_unmatched_files: true
           files: |
-            artifacts/**/*
+            release-assets/*
