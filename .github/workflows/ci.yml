@@ -58,7 +58,7 @@ jobs:
 
   policy-guard:
     needs: changes
-    if: needs.changes.outputs.code_changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code_changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -126,14 +126,14 @@ jobs:
 
   web-quality:
     needs: [changes, policy-guard]
-    if: needs.changes.outputs.code_changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code_changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -146,7 +146,7 @@ jobs:
 
   rust-quality:
     needs: [changes, policy-guard]
-    if: needs.changes.outputs.rust_changed == 'true' || needs.changes.outputs.code_changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust_changed == 'true' || needs.changes.outputs.code_changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -158,14 +158,14 @@ jobs:
 
   desktop-smoke:
     needs: [changes, policy-guard]
-    if: needs.changes.outputs.tauri_changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.tauri_changed == 'true'
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
