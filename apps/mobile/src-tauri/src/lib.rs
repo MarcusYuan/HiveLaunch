@@ -33,7 +33,7 @@
 /// 移动端入口函数
 ///
 /// 仅初始化 WebView 容器和必要的系统插件
-#[cfg_attr(target_os = "android", tauri::mobile_entry_point)]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 添加调试日志
     println!("HiveLaunch Mobile: Starting initialization...");
@@ -46,7 +46,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
         // 设置日志
-        .setup(|app| {
+        .setup(|_app| {
             println!("HiveLaunch Mobile: Setup called");
             Ok(())
         })
