@@ -187,8 +187,11 @@ jobs:
       - name: Build Android release
         run: |
           if [ "${{ needs.detect.outputs.tauri_mobile }}" = "true" ]; then
-            pnpm --dir apps/mobile android:init
-            pnpm --dir apps/mobile exec tauri android build --debug --ci
+            (
+              cd apps/mobile
+              pnpm android:init
+              pnpm exec tauri android build --debug --ci
+            )
           elif [ -f "apps/mobile/src-tauri/gen/android/gradlew" ]; then
             chmod +x apps/mobile/src-tauri/gen/android/gradlew
             (cd apps/mobile/src-tauri/gen/android && ./gradlew assembleRelease)
@@ -230,8 +233,11 @@ jobs:
       - name: Build iOS release
         run: |
           if [ "${{ needs.detect.outputs.tauri_mobile }}" = "true" ]; then
-            pnpm --dir apps/mobile ios:init
-            pnpm --dir apps/mobile exec tauri ios build --debug --target aarch64-sim --ci
+            (
+              cd apps/mobile
+              pnpm ios:init
+              pnpm exec tauri ios build --debug --target aarch64-sim --ci
+            )
           else
             set -euo pipefail
             cd apps/mobile/ios
