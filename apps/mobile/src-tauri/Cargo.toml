@@ -1,0 +1,39 @@
+[package]
+name = "hivelaunch-mobile"
+version = "0.1.0"
+edition = "2021"
+description = "HiveLaunch Mobile - Pure Frontend Client"
+authors = ["HiveLaunch Team"]
+
+[lib]
+name = "hivelaunch_mobile"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+# Tauri 核心 - 仅作为 WebView 容器
+tauri = { version = "2.0", features = [] }
+
+# 系统插件
+tauri-plugin-notification = "2"
+tauri-plugin-shell = "2"
+
+# 序列化（Tauri 命令参数）
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# 日志
+log = "0.4"
+
+# ❌ 以下依赖不包含在移动端：
+# - bee-executor（Agent 执行 → 云端）
+# - bee-workspace-git（Git 操作 → 云端）
+# - bee-container（容器管理 → 云端）
+# - git2（Git 库 → 不需要）
+# - codex-core（Codex → 不需要）
+# - axum/tower（HTTP Server → 不需要）
+# - sqlx（数据库 → 云端）
+# - tokio-tungstenite（WebSocket → 不需要服务端）
+# - reqwest（HTTP 客户端 → 前端处理）
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }

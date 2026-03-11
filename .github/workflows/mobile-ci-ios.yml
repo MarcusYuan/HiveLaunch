@@ -1,0 +1,41 @@
+name: Mobile CI iOS
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile-ci-ios.yml'
+  push:
+    branches: [dev, main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile-ci-ios.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-ci-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+      - name: Build iOS debug
+        run: |
+          cd apps/mobile
+          rm -rf src-tauri/gen/apple
+          pnpm exec tauri ios init
+          pnpm exec tauri ios build --debug --target aarch64-sim --ci

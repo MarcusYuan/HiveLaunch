@@ -1,0 +1,31 @@
+name: API CI Windows
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'infra/tauri/**'
+      - 'packages/bee-*/**'
+      - '.github/workflows/api-ci-windows.yml'
+  push:
+    branches: [dev, main]
+    paths:
+      - 'infra/tauri/**'
+      - 'packages/bee-*/**'
+      - '.github/workflows/api-ci-windows.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: api-ci-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-quality-windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --manifest-path infra/tauri/Cargo.toml
+      - run: cargo test --manifest-path infra/tauri/Cargo.toml
+      - run: cargo build --manifest-path infra/tauri/Cargo.toml --bin http-server
