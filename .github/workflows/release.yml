@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -59,21 +59,37 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    timeout-minutes: 40
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - run: cargo build --release --manifest-path infra/tauri/Cargo.toml --bin http-server
+      - name: Prepare non-Windows API artifact
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p infra/tauri/target/release/dist
+          cp infra/tauri/target/release/http-server infra/tauri/target/release/dist/http-server-${{ matrix.os }}
+      - name: Prepare Windows API artifact
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path infra/tauri/target/release/dist | Out-Null
+          Copy-Item infra/tauri/target/release/http-server.exe infra/tauri/target/release/dist/http-server-${{ matrix.os }}.exe
       - uses: actions/upload-artifact@v4
         if: runner.os != 'Windows'
         with:
           name: http-server-${{ matrix.os }}-${{ needs.prepare.outputs.tag }}
-          path: infra/tauri/target/release/http-server
+          path: infra/tauri/target/release/dist/http-server-${{ matrix.os }}
       - uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
           name: http-server-${{ matrix.os }}-${{ needs.prepare.outputs.tag }}
-          path: infra/tauri/target/release/http-server.exe
+          path: infra/tauri/target/release/dist/http-server-${{ matrix.os }}.exe
 
   build-desktop:
     needs: prepare
@@ -83,7 +99,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -106,9 +122,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: Package release assets
+        run: |
+          mkdir -p release-assets
+          for artifact_dir in artifacts/*; do
+            artifact_name="$(basename "$artifact_dir")"
+            tar -czf "release-assets/${artifact_name}.tar.gz" -C "$artifact_dir" .
+          done
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           fail_on_unmatched_files: true
           files: |
-            artifacts/**/*
+            release-assets/*
