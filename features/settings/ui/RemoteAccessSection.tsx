@@ -10,6 +10,7 @@ import {
   getMobileDirectApiBase,
   isMobileDevice,
   isTauriMobile,
+  normalizeMobileDirectApiBase,
   requestMobileRelayTransport,
   setMobileConnectionMode,
   setMobileDirectApiBase,
@@ -305,8 +306,6 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
   const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const mobileMode = useMemo(() => isMobileEnvironment(), [])
 
-  const normalizeApiBase = (value: string) => value.trim().replace(/\/$/, '')
-
   const loadStatus = async () => {
     try {
       const data = await getRemoteAccessStatus()
@@ -372,13 +371,6 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
     }
     setMobileConnectionMode(mobileConnectionMode)
   }, [mobileConnectionMode, mobileMode])
-
-  useEffect(() => {
-    if (!mobileMode) {
-      return
-    }
-    setMobileDirectApiBase(mobileDirectApiBase)
-  }, [mobileDirectApiBase, mobileMode])
 
   useEffect(() => {
     if (!mobileMode || typeof window === 'undefined') {
@@ -716,7 +708,7 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
   }
 
   const testDirectConnection = async () => {
-    const base = normalizeApiBase(mobileDirectApiBase)
+    const base = normalizeMobileDirectApiBase(mobileDirectApiBase)
     if (!base) {
       setMobileDirectStatus(texts.directAddressRequired)
       return
@@ -738,7 +730,7 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
   }
 
   const applyDirectApiBase = () => {
-    const base = normalizeApiBase(mobileDirectApiBase)
+    const base = normalizeMobileDirectApiBase(mobileDirectApiBase)
     if (!base) {
       setMobileDirectStatus(texts.directAddressRequired)
       return
