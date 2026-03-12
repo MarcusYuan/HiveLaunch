@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createWorkspace, WorkspaceInfo, WorkspaceConfig } from '../lib/workspace-creator'
 import { useExecutionProcesses } from './useExecutionProcesses'
 import { useCreateSession } from './useCreateSession'
-import { sessionsApi } from '@/features/agent-execution/api/sessions'
+import { sessionsApi, executionProcessesApi } from '@/features/agent-execution/api/sessions'
 import { resolveHttpUrl } from '../lib/api-config'
 import type { ExecutionProcess, BaseCodingAgent } from '@/features/agent-execution/types/execution-process'
 
@@ -531,12 +531,9 @@ export function useTaskExecutionV2({
     if (!sessionId) return
 
     try {
-      // 找到正在运行的 process 并停止
       const runningProcess = executionProcesses.find(p => p.status === 'running')
       if (runningProcess) {
-        await fetch(resolveHttpUrl(`/api/execution-processes/${runningProcess.id}/stop`), {
-          method: 'POST',
-        })
+        await executionProcessesApi.stop(runningProcess.id)
       }
     } catch (err) {
       console.error('[useTaskExecutionV2] Failed to stop execution:', err)

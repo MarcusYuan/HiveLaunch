@@ -1054,8 +1054,13 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
       setDetailDraftMessage('')
       return
     }
-    setDetailDraftMessage(activeTask.description || '')
-  }, [activeTask?.id])
+    // 只有 todo 状态才显示 description，已执行的任务输入框应该清空
+    if (activeTask.status === 'todo') {
+      setDetailDraftMessage(activeTask.description || '')
+    } else {
+      setDetailDraftMessage('')
+    }
+  }, [activeTask?.id, activeTask?.status])
 
   useEffect(() => {
     if (!activeTask) return
