@@ -66,6 +66,4 @@ pnpm typecheck
 - `docs/remote-access-highlevel.md`
 - `docs/remote-access-prd.md`
 - `docs/remote-access/technology-verification.md`
-- `docs/remote-access/server-admin-ui.md`
-- `docs/remote-access/_tracker.md`
-- `docs/troubleshooting.md`
+- `docs/remote-access/connection-modes.md`
