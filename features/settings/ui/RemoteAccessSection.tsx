@@ -89,6 +89,7 @@ interface RemoteAccessTexts {
   scanNotSupported: string
   cameraInitFailed: string
   scanFailed: string
+  cameraPermissionUnsupported: string
   cameraPermissionDenied: string
   cameraNotFound: string
   cameraUnavailable: string
@@ -165,6 +166,7 @@ const defaultTexts: RemoteAccessTexts = {
   scanNotSupported: 'Camera scanning is not supported in current environment, paste QR content manually',
   cameraInitFailed: 'Camera initialization failed',
   scanFailed: 'Scan failed, please retry',
+  cameraPermissionUnsupported: 'Current environment does not support camera permission request',
   cameraPermissionDenied: 'Camera permission denied, allow camera access in system settings',
   cameraNotFound: 'No available camera detected',
   cameraUnavailable: 'Cannot access camera, please paste QR content manually',
@@ -297,6 +299,7 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
   const [scanInput, setScanInput] = useState('')
   const [scanError, setScanError] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
+  const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scanStreamRef = useRef<MediaStream | null>(null)
   const scanTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -570,6 +573,36 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
     return true
   }
 
+  const requestCameraPermission = async (forScan: boolean): Promise<MediaStream | null> => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraPermissionGranted(false)
+      setScanError(texts.cameraPermissionUnsupported)
+      return null
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+      })
+      setCameraPermissionGranted(true)
+      setScanError(null)
+      if (!forScan) {
+        stream.getTracks().forEach((track) => track.stop())
+        return null
+      }
+      return stream
+    } catch (error) {
+      setCameraPermissionGranted(false)
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        setScanError(texts.cameraPermissionDenied)
+      } else if (error instanceof DOMException && error.name === 'NotFoundError') {
+        setScanError(texts.cameraNotFound)
+      } else {
+        setScanError(texts.cameraUnavailable)
+      }
+      return null
+    }
+  }
+
   const startScan = async () => {
     setScanError(null)
     const tauriMobileRuntime = isTauriMobile()
@@ -582,10 +615,12 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
       setScanError(texts.scanNotSupported)
       return
     }
+    const stream = await requestCameraPermission(true)
+    if (!stream) {
+      stopScan()
+      return
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-      })
       scanStreamRef.current = stream
       if (!videoRef.current) {
         setScanError(texts.cameraInitFailed)
@@ -612,6 +647,7 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
         }
       }, 500)
     } catch (error) {
+      setCameraPermissionGranted(false)
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         setScanError(texts.cameraPermissionDenied)
       } else if (error instanceof DOMException && error.name === 'NotFoundError') {
@@ -622,6 +658,13 @@ export function RemoteAccessSection({ texts = defaultTexts }: RemoteAccessSectio
       stopScan()
     }
   }
+
+  useEffect(() => {
+    if (!mobileMode) {
+      return
+    }
+    void requestCameraPermission(false)
+  }, [mobileMode])
 
   const desktopQrImageUrl = useMemo(() => {
     if (!desktopQrPayload) {
