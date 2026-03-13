@@ -336,6 +336,7 @@ export const useTaskStore = create<TaskState>()(
               modelId: (rawTask.modelId || rawTask.model_id) as Task['modelId'],
               taskType: ((rawTask.taskType || rawTask.task_type) as Task['taskType']) || 'normal',
               directBranch: (rawTask.directBranch || rawTask.direct_branch) as Task['directBranch'],
+              imageIds: (rawTask.imageIds || rawTask.image_ids) as Task['imageIds'],
               createdAt: String(rawTask.createdAt || rawTask.created_at || new Date().toISOString()),
               updatedAt: String(rawTask.updatedAt || rawTask.updated_at || new Date().toISOString()),
             }
