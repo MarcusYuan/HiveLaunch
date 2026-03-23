@@ -22,22 +22,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     // 从环境变量读取配置
-    // 默认使用 infra/db/hivelaunch.db（与 Next.js API 共享）
-    let db_path = std::env::var("DB_PATH")
-        .unwrap_or_else(|_| "../db/hivelaunch.db".to_string());
+    // 默认使用 ~/.hivelaunch/hivelaunch.db
+    let db_path = process::db::resolve_db_path();
+    let db_path_str = db_path.to_string_lossy().to_string();
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "3847".to_string())
         .parse::<u16>()
         .unwrap_or(3847);
 
     println!("Starting HiveLaunch HTTP Server...");
-    println!("Database path: {}", db_path);
+    println!("Database path: {}", db_path.display());
     println!("Server will be available at: http://0.0.0.0:{}", port);
 
     // 初始化数据库连接池
-    let db_pool = match process::db::init_db_pool(&db_path).await {
+    let db_pool = match process::db::init_db_pool(&db_path_str).await {
         Ok(pool) => {
-            println!("[MAIN] Database connected: {}", db_path);
+            println!("[MAIN] Database connected: {}", db_path.display());
             Some(Arc::new(pool))
         }
         Err(e) => {

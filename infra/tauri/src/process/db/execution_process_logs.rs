@@ -340,13 +340,6 @@ pub async fn init_db_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error>
     .execute(&pool)
     .await?;
 
-    sqlx::query(
-        r#"CREATE INDEX IF NOT EXISTS idx_workspaces_task_role
-           ON workspaces(task_id, role)"#,
-    )
-    .execute(&pool)
-    .await?;
-
     let workspace_columns = sqlx::query("PRAGMA table_info(workspaces)")
         .fetch_all(&pool)
         .await?;
@@ -370,6 +363,13 @@ pub async fn init_db_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error>
             .execute(&pool)
             .await?;
     }
+
+    sqlx::query(
+        r#"CREATE INDEX IF NOT EXISTS idx_workspaces_task_role
+           ON workspaces(task_id, role)"#,
+    )
+    .execute(&pool)
+    .await?;
 
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS sessions (

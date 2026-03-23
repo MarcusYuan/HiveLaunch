@@ -77,10 +77,10 @@ pub fn run_app() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
         .init();
 
-    let db_path = std::env::var("DB_PATH")
-        .unwrap_or_else(|_| "../db/hivelaunch.db".to_string());
+    let db_path = process::db::resolve_db_path();
+    let db_path_str = db_path.to_string_lossy().to_string();
     let db_pool = match tokio::runtime::Runtime::new() {
-        Ok(rt) => match rt.block_on(process::db::init_db_pool(&db_path)) {
+        Ok(rt) => match rt.block_on(process::db::init_db_pool(&db_path_str)) {
             Ok(pool) => Some(Arc::new(pool)),
             Err(e) => {
                 log::error!("[MAIN] Failed to connect to database: {}", e);
